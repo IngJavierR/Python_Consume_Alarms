@@ -32,9 +32,9 @@ def sendAlarmsToRemedy(alarms):
         alarmsToSend.append({
             'title': '{0} - {1}'.format(alarm['alarmsDTO']['condition']['value'], alarm['alarmsDTO']['deviceName']),
             'description': alarm['alarmsDTO']['message'],
-            'affectedClient': 'bmc',
-            'impact': '',
-            'severity': ''
+            'affectedClient': 'BMC',
+            'impact': '4-Menor/Localizado',
+            'severity': '4-Baja'
         })
         ticket = services.postAlarmRemedy(alarmsToSend)
         alarm['ticket'] = ticket
