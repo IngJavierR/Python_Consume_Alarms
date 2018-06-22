@@ -1,9 +1,11 @@
 import persist
 import services
 import datetime
+import schedule
+import time
 
-#Fine Alarms Every (seconds)
-timeToSearchAlarms = 5400
+#Fine Alarms Every (minutes)
+timeToSearchAlarms = 1
 
 def filterAlarms(alarms):
     print(alarms)
@@ -34,13 +36,12 @@ def sendAlarmsToRemedy(alarms):
         ticket = services.postAlarmRemedy(alarmsToSend)
         alarm['ticket'] = ticket
     print('Alarms sended')
-    print(alarms)
 
 def getTimeToQuery():
-    time = datetime.datetime.now() - datetime.timedelta(seconds=timeToSearchAlarms)
+    time = datetime.datetime.now() - datetime.timedelta(minutes=timeToSearchAlarms)
     return time.strftime('%Y-%m-%dT%H:%M:%S')
 
-def __main__():
+def job():
     print('Captura de alarmas Cisco Prime')
     time = getTimeToQuery()
     print('Mostrando alarmas desde: {0}'.format(time))
@@ -53,5 +54,12 @@ def __main__():
         result = persist.saveAlarms(alarms)
         print(result)
     print('Proceso finalizado')
+
+def __main__():
+    job()
+    schedule.every(timeToSearchAlarms).minutes.do(job)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
 
 __main__()
