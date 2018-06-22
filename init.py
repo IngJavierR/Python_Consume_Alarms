@@ -5,7 +5,7 @@ import schedule
 import time
 
 #Fine Alarms Every (minutes)
-timeToSearchAlarms = 1
+timeToSearchAlarms = 120
 
 def filterAlarms(alarms):
     print(alarms)
@@ -27,16 +27,15 @@ def saveNewAlarms(alarms):
     return persist.saveAlarms(alarms)
 
 def sendAlarmsToRemedy(alarms):
-    alarmsToSend = []
     for alarm in alarms:
-        alarmsToSend.append({
+        alarmToSend = {
             'title': '{0} - {1}'.format(alarm['alarmsDTO']['condition']['value'], alarm['alarmsDTO']['deviceName']),
             'description': alarm['alarmsDTO']['message'],
             'affectedClient': 'BMC',
             'impact': '4-Menor/Localizado',
             'severity': '4-Baja'
-        })
-        ticket = services.postAlarmRemedy(alarmsToSend)
+        }
+        ticket = services.postAlarmRemedy(alarmToSend)
         alarm['ticket'] = ticket
     print('Alarms sended')
 
