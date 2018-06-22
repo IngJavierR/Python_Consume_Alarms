@@ -31,7 +31,10 @@ def sendAlarmsToRemedy(alarms):
     for alarm in alarms:
         alarmsToSend.append({
             'title': '{0} - {1}'.format(alarm['alarmsDTO']['condition']['value'], alarm['alarmsDTO']['deviceName']),
-            'description': alarm['alarmsDTO']['message']
+            'description': alarm['alarmsDTO']['message'],
+            'affectedClient': 'bmc',
+            'impact': '',
+            'severity': ''
         })
         ticket = services.postAlarmRemedy(alarmsToSend)
         alarm['ticket'] = ticket
@@ -53,7 +56,7 @@ def job():
         sendAlarmsToRemedy(alarms)
         result = persist.saveAlarms(alarms)
         print(result)
-    print('Proceso finalizado')
+    print('Finalizado, nueva ejecucion en: {0} minutos'.format(timeToSearchAlarms))
 
 def __main__():
     job()
