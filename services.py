@@ -11,7 +11,7 @@ primeProperties = {
 }
 
 remedyPropesties = {
-    'baseUrl': 'https://fe21dac9.ngrok.io/',
+    'baseUrl': 'http://localhost/RemedyServices/',
     'paths': {
         'sendAlarm': 'api/tickets'
     }
@@ -41,5 +41,3 @@ def postAlarmRemedy(alarm):
     response = executeRemedyRequest(urlToExec, alarm)
     print(response)
     return response
-    #print(alarm)
-    #return 'INC00000000000127'

@@ -5,13 +5,13 @@ import schedule
 import time
 
 #Fine Alarms Every (minutes)
-timeToSearchAlarms = 120
+timeToSearchAlarms = 5
 
 def filterAlarms(alarms):
     print(alarms)
     print('Filter')
     filteredAlarms = list(filter(lambda x: (
-        x['alarmsDTO']['severity'] == 'CLEARED' or
+        #x['alarmsDTO']['condition']['value'] != 'LINK_DOWN' and
         x['alarmsDTO']['severity'] == 'CRITICAL'
     ), alarms))
     return filteredAlarms
