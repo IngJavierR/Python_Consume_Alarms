@@ -1,11 +1,5 @@
-import persist
-import services
-import datetime
-import schedule
-import time
-
-#Fine Alarms Every (minutes)
-timeToSearchAlarms = 5
+import persist, services
+import datetime, schedule, time, re
 
 def filterAlarms(alarms):
     print(alarms)
@@ -43,7 +37,35 @@ def getTimeToQuery():
     time = datetime.datetime.now() - datetime.timedelta(minutes=timeToSearchAlarms)
     return time.strftime('%Y-%m-%dT%H:%M:%S')
 
-def job():
+def getTimeToCounter(hour):
+    time = datetime.datetime.now()
+    return time.strftime('%Y-%m-%dT%{0}:'.format(hour))
+
+def createAlarmCounter(alarms):
+    regex = r"(\d{4}-\d{2}-\d{2}\w\d+)"
+    for alarm in alarms:
+        resultReg = re.search(regex, alarm['alarmsDTO']['alarmFoundAt'], re.IGNORECASE)
+        alarm['alarmsDTO']['dateTime'] = resultReg.group(1)
+
+    alarmsPerHour = []
+    for hour in range(0,24):
+        alarmsNum = list(filter(lambda x: (
+            x['alarmsDTO']['dateTime'].startswith(getTimeToCounter(x))
+        ), alarms))
+        alarmsPerHour.append({
+            count: alarmsNum.count(),
+            datetime: getTimeToCounter(x)
+        })
+    return alarmsPerHour
+
+def updateAlarmsCounter(alarms):
+    alarmsPerHour = createAlarmCounter(alarms)
+    for alarms in alarmsPerHour:
+        savedAlarm = persist.getAlarmsCounter(alarms[datetime])
+        savedAlarm['count'] = savedAlarm['count'] + alarms['count']
+        persist.saveAlarmCounter(savedAlarm)
+
+def job(timeToSearchAlarms):
     print('Captura de alarmas Cisco Prime')
     time = getTimeToQuery()
     print('Mostrando alarmas desde: {0}'.format(time))
@@ -53,13 +75,15 @@ def job():
     else:
         print(alarms)
         sendAlarmsToRemedy(alarms)
+        updateAlarmsCounter(alarms)
         result = persist.saveAlarms(alarms)
         print(result)
     print('Finalizado, nueva ejecucion en: {0} minutos'.format(timeToSearchAlarms))
+    return alarms
 
-def start():
-    job()
-    schedule.every(timeToSearchAlarms).minutes.do(job)
+def start(timeToSearchAlarms):
+    job(timeToSearchAlarms)
+    schedule.every(timeToSearchAlarms).minutes.do(job(timeToSearchAlarms))
     while True:
         schedule.run_pending()
         time.sleep(1)

@@ -1,9 +1,11 @@
-import cron
-import math, random
+import cron, persist
+import math, random, datetime
 from flask import Flask, Response, json
 from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
+#Fine Alarms Every (minutes)
+timeToSearchAlarms = 5
 
 def createResponse(data):
     return Response(
@@ -22,17 +24,34 @@ def createAlarms(timeId):
 
 @app.route('/', methods=['GET'])
 def hello_world():
-    return createResponse('Hello World')
+    time = datetime.datetime.now()
+    srtTime = time.strftime('%Y-%m-%dT%H')
+    return createResponse(srtTime)
+
+@app.route('/tickets', methods=['GET'])
+def getTickets():
+    #alarms = createAlarms('am')
+    #alarms.extend(createAlarms('pm'))
+    alarms =  persist.getAlarmsCounter()
+    alarmsPerHour = []
+    for hour in range(0,24):
+        alarmsNum = list(filter(lambda x: (
+            x['alarmsDTO']['dateTime'] == cron.getTimeToCounter(x)
+        ), alarms))
+        alarmsPerHour.append({
+            count: alarmsNum.count(),
+            datetime: cron.getTimeToCounter(x)
+        })
+    return createResponse(alarmsPerHour)
 
 @app.route('/alarms', methods=['GET'])
 def getAlarms():
-    alarms = createAlarms('am')
-    alarms.extend(createAlarms('pm'))
+    alarms = cron.job(timeToSearchAlarms)
     return createResponse(alarms)
 
 def __main__():
     print('Iniciando Cron')
-    #cron.start();
+    #cron.start(timeToSearchAlarms);
     print('Inicie Servicio')
     app.run()
 
