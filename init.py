@@ -32,15 +32,15 @@ def hello_world():
 def getTickets():
     #alarms = createAlarms('am')
     #alarms.extend(createAlarms('pm'))
-    alarms =  persist.getAlarmsCounter()
+    alarms =  persist.getAllAlarmsCounter()
     alarmsPerHour = []
     for hour in range(0,24):
         alarmsNum = list(filter(lambda x: (
-            x['alarmsDTO']['dateTime'] == cron.getTimeToCounter(x)
+            x['alarmsDTO']['dateTime'] == cron.getTimeToCounter(hour)
         ), alarms))
         alarmsPerHour.append({
-            count: alarmsNum.count(),
-            datetime: cron.getTimeToCounter(x)
+            "count": alarmsNum.count(),
+            "datetime": cron.getTimeToCounter(hour)
         })
     return createResponse(alarmsPerHour)
 

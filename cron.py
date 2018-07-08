@@ -33,7 +33,7 @@ def sendAlarmsToRemedy(alarms):
         alarm['ticket'] = ticket
     print('Alarms sended')
 
-def getTimeToQuery():
+def getTimeToQuery(timeToSearchAlarms):
     time = datetime.datetime.now() - datetime.timedelta(minutes=timeToSearchAlarms)
     return time.strftime('%Y-%m-%dT%H:%M:%S')
 
@@ -50,11 +50,11 @@ def createAlarmCounter(alarms):
     alarmsPerHour = []
     for hour in range(0,24):
         alarmsNum = list(filter(lambda x: (
-            x['alarmsDTO']['dateTime'].startswith(getTimeToCounter(x))
+            x['alarmsDTO']['dateTime'].startswith(getTimeToCounter(hour))
         ), alarms))
         alarmsPerHour.append({
-            count: alarmsNum.count(),
-            datetime: getTimeToCounter(x)
+            "count": alarmsNum.count(),
+            "datetime": getTimeToCounter(hour)
         })
     return alarmsPerHour
 
@@ -67,7 +67,7 @@ def updateAlarmsCounter(alarms):
 
 def job(timeToSearchAlarms):
     print('Captura de alarmas Cisco Prime')
-    time = getTimeToQuery()
+    time = getTimeToQuery(timeToSearchAlarms)
     print('Mostrando alarmas desde: {0}'.format(time))
     alarms = getNewAlarms(time)
     if not alarms:
