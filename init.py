@@ -1,67 +1,39 @@
-import persist
-import services
-import datetime
-import schedule
-import time
+import cron
+import math, random
+from flask import Flask, Response, json
+from flask_cors import CORS
+app = Flask(__name__)
+CORS(app)
 
-#Fine Alarms Every (minutes)
-timeToSearchAlarms = 5
+def createResponse(data):
+    return Response(
+        response=json.dumps(data),
+        status=200,
+        mimetype='application/json')
 
-def filterAlarms(alarms):
-    print(alarms)
-    print('Filter')
-    filteredAlarms = list(filter(lambda x: (
-        #x['alarmsDTO']['condition']['value'] != 'LINK_DOWN' and
-        x['alarmsDTO']['severity'] == 'CRITICAL'
-    ), alarms))
-    return filteredAlarms
-
-def getNewAlarms(time):
-    primeAlarms = services.getAllAlarms(time)
-    if primeAlarms is None:
-        return None
-    newAlarms = filterAlarms(primeAlarms)
-    return newAlarms
-
-def saveNewAlarms(alarms):
-    return persist.saveAlarms(alarms)
-
-def sendAlarmsToRemedy(alarms):
-    for alarm in alarms:
-        alarmToSend = {
-            'title': '{0} - {1}'.format(alarm['alarmsDTO']['condition']['value'], alarm['alarmsDTO']['deviceName']),
-            'description': alarm['alarmsDTO']['message'],
-            'affectedClient': 'BMC',
-            'impact': '4-Menor/Localizado',
-            'severity': '4-Baja'
+def createAlarms(timeId):
+    return list(map(lambda x: (
+        {
+            "id": x,
+            "hour": '12{0}'.format(timeId) if x== 0 else '{0}{1}'.format(x,timeId),
+            "numTickets": math.floor(random.random() * 100) + 1
         }
-        ticket = services.postAlarmRemedy(alarmToSend)
-        alarm['ticket'] = ticket
-    print('Alarms sended')
+    ), range(0,12)))
 
-def getTimeToQuery():
-    time = datetime.datetime.now() - datetime.timedelta(minutes=timeToSearchAlarms)
-    return time.strftime('%Y-%m-%dT%H:%M:%S')
+@app.route('/', methods=['GET'])
+def hello_world():
+    return createResponse('Hello World')
 
-def job():
-    print('Captura de alarmas Cisco Prime')
-    time = getTimeToQuery()
-    print('Mostrando alarmas desde: {0}'.format(time))
-    alarms = getNewAlarms(time)
-    if not alarms:
-        print('No se encontraron alarmas')
-    else:
-        print(alarms)
-        sendAlarmsToRemedy(alarms)
-        result = persist.saveAlarms(alarms)
-        print(result)
-    print('Finalizado, nueva ejecucion en: {0} minutos'.format(timeToSearchAlarms))
+@app.route('/alarms', methods=['GET'])
+def getAlarms():
+    alarms = createAlarms('am')
+    alarms.extend(createAlarms('pm'))
+    return createResponse(alarms)
 
 def __main__():
-    job()
-    schedule.every(timeToSearchAlarms).minutes.do(job)
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    print('Iniciando Cron')
+    #cron.start();
+    print('Inicie Servicio')
+    app.run()
 
 __main__()
