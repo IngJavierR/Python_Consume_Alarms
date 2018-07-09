@@ -1,4 +1,4 @@
-import cron, persist
+import cron, persist, services
 import math, random, datetime
 from bson import json_util
 from flask import Flask, Response, json
@@ -6,7 +6,7 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 #Fine Alarms Every (minutes)
-timeToSearchAlarms = 450
+timeToSearchAlarms = 5
 
 def createResponse(data):
     return Response(
@@ -38,15 +38,29 @@ def getTickets():
     print(alarms)
     return createResponse(json_util._json_convert(alarms))
 
-@app.route('/alarms', methods=['GET'])
-def getAlarms():
-    alarms = cron.job(timeToSearchAlarms)
+@app.route('/alarms/<time>', methods=['GET'])
+def getAlarms(time):
+    alarms = cron.alarms(time)
     return createResponse(json_util._json_convert(alarms))
 
+@app.route('/device/<id>', methods=['GET'])
+def getDeviceInfo(id):
+    deviceInfo = services.getDeviceInfo(id)
+    filterDeviceInfo = list(map(lambda x: (
+        {
+            "fans": x['inventoryDetailsDTO']['fans'],
+            "ipInterfaces": x['inventoryDetailsDTO']['ipInterfaces'],
+            "sensors": x['inventoryDetailsDTO']['sensors'],
+            "summary": x['inventoryDetailsDTO']['summary'],
+            "powerSupplies": x['inventoryDetailsDTO']['powerSupplies']
+        }
+    ), deviceInfo))
+    return createResponse(json_util._json_convert(filterDeviceInfo))
+
 def __main__():
-    print('Iniciando Cron')
-    #cron.start(timeToSearchAlarms);
     print('Inicie Servicio')
     app.run()
+    print('Iniciando Cron')
+    cron.start(timeToSearchAlarms)
 
 __main__()

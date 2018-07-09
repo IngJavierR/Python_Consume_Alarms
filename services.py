@@ -4,9 +4,10 @@ import requests
 primeProperties = {
     'headers': {'Content-Type': 'application/json',
             'Authorization': 'Basic Z3Vlc3Q6YXR0LjIwMTg='},
-    'baseUrl': 'https://10.106.0.23/webacs/api/v1/',
+    'baseUrl': 'https://10.106.0.23/webacs/api/v1/data/',
     'paths': {
-        'AllAlarms': 'data/Alarms.json?alarmFoundAt=gt("{0}")&.full=true'
+        'AllAlarms': 'Alarms.json?alarmFoundAt=gt("{0}")&.full=true',
+        'DeviceInfo': 'InventoryDetails/{0}.json'
     }
 }
 
@@ -24,6 +25,13 @@ def executeRequest(url):
 
 def getAllAlarms(time):
     urlToExec = '{0}{1}'.format(primeProperties['baseUrl'], primeProperties['paths']['AllAlarms'].format(time))
+    result = executeRequest(urlToExec)
+    if 'entity' not in result['queryResponse']:
+        return None
+    return result['queryResponse']['entity']
+
+def getDeviceInfo(id):
+    urlToExec = '{0}{1}'.format(primeProperties['baseUrl'], primeProperties['paths']['DeviceInfo'].format(id))
     result = executeRequest(urlToExec)
     if 'entity' not in result['queryResponse']:
         return None

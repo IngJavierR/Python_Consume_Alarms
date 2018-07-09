@@ -1,13 +1,13 @@
 import persist, services
 import datetime, schedule, time, re
-
+timeToSearchAlarms = 5
 def filterAlarms(alarms):
     print(alarms)
     print('Filter')
     filteredAlarms = list(filter(lambda x: (
         #x['alarmsDTO']['condition']['value'] != 'LINK_DOWN' and
-        #x['alarmsDTO']['severity'] == 'CRITICAL'
-        x['alarmsDTO']['severity'] == 'CLEARED'
+        x['alarmsDTO']['severity'] == 'CRITICAL'
+        #x['alarmsDTO']['severity'] == 'CLEARED'
     ), alarms))
     return filteredAlarms
 
@@ -47,6 +47,18 @@ def getDayToCounter():
     time = datetime.datetime.now()
     return time.strftime('%Y-%m-%dT')
 
+def getHourToCounter(hour):
+    hourStr = ''
+    if hour > 0 and hour < 12:
+        hourStr = '{0}am'.format(hour)
+    elif hour > 12:
+        hourStr = '{0}pm'.format(hour - 12)
+    elif hour == 0:
+        hourStr = '12am'
+    elif hour == 12:
+        hourStr = '12pm'
+    return hourStr
+
 def createAlarmCounter(alarms):
     regex = r"(\d{4}-\d{2}-\d{2}\w\d+)"
     for alarm in alarms:
@@ -60,6 +72,7 @@ def createAlarmCounter(alarms):
         alarmsPerHour.append({
             "counter": len(alarmsNum) if alarmsNum else 0,
             "datetime": getTimeToCounter(hour),
+            "hour": getHourToCounter(hour),
             "originday": getDayToCounter()
         })
     return alarmsPerHour
@@ -74,10 +87,11 @@ def updateAlarmsCounter(alarms):
             savedAlarm = {}
             savedAlarm['counter'] = alarms['counter']
             savedAlarm['datetime'] = alarms['datetime']
+            savedAlarm['hour'] = alarms['hour']
             savedAlarm['originday'] = alarms['originday']
         persist.saveAlarmCounter(savedAlarm)
 
-def job(timeToSearchAlarms):
+def job():
     print('Captura de alarmas Cisco Prime')
     time = getTimeToQuery(timeToSearchAlarms)
     print('Mostrando alarmas desde: {0}'.format(time))
@@ -87,16 +101,30 @@ def job(timeToSearchAlarms):
         print('No se encontraron alarmas')
     else:
         print(alarms)
-        #sendAlarmsToRemedy(alarms)
+        sendAlarmsToRemedy(alarms)
         updateAlarmsCounter(alarms)
         result = persist.saveAlarms(alarms)
         print(result)
     print('Finalizado, nueva ejecucion en: {0} minutos'.format(timeToSearchAlarms))
     return alarms
 
-def start(timeToSearchAlarms):
-    job(timeToSearchAlarms)
-    schedule.every(timeToSearchAlarms).minutes.do(job(timeToSearchAlarms))
+def alarms(timeToSearchAlarms):
+    print('Captura de alarmas Cisco Prime')
+    time = getTimeToQuery(timeToSearchAlarms)
+    print('Mostrando alarmas desde: {0}'.format(time))
+    alarms = getNewAlarms(time)
+    if not alarms:
+        alarms=[]
+        print('No se encontraron alarmas')
+    print(alarms)
+    return alarms
+
+
+def start(cronTime):
+    global timeToSearchAlarms
+    timeToSearchAlarms = cronTime
+    job()
+    schedule.every(timeToSearchAlarms).minutes.do(job)
     while True:
         schedule.run_pending()
         time.sleep(1)
