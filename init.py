@@ -1,11 +1,12 @@
 import cron, persist
 import math, random, datetime
+from bson import json_util
 from flask import Flask, Response, json
 from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 #Fine Alarms Every (minutes)
-timeToSearchAlarms = 5
+timeToSearchAlarms = 450
 
 def createResponse(data):
     return Response(
@@ -30,24 +31,17 @@ def hello_world():
 
 @app.route('/tickets', methods=['GET'])
 def getTickets():
-    #alarms = createAlarms('am')
-    #alarms.extend(createAlarms('pm'))
-    alarms =  persist.getAllAlarmsCounter()
-    alarmsPerHour = []
-    for hour in range(0,24):
-        alarmsNum = list(filter(lambda x: (
-            x['alarmsDTO']['dateTime'] == cron.getTimeToCounter(hour)
-        ), alarms))
-        alarmsPerHour.append({
-            "count": alarmsNum.count(),
-            "datetime": cron.getTimeToCounter(hour)
-        })
-    return createResponse(alarmsPerHour)
+    time = datetime.datetime.now()
+    day = time.strftime('%Y-%m-%dT')
+    alarms =  persist.getAllAlarmsCounter(day)
+    print("alarms")
+    print(alarms)
+    return createResponse(json_util._json_convert(alarms))
 
 @app.route('/alarms', methods=['GET'])
 def getAlarms():
     alarms = cron.job(timeToSearchAlarms)
-    return createResponse(alarms)
+    return createResponse(json_util._json_convert(alarms))
 
 def __main__():
     print('Iniciando Cron')

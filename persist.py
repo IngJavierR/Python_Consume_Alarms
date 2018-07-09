@@ -15,17 +15,20 @@ def saveAlarms(alarms):
     doc = db['alarms'].insert_many(alarms)
     return doc.inserted_ids
 
-def getAlarmsCounter(dateTime):
+def getAlarmsCounter(time):
     db = getConnection()
-    doc = db['alarms-counter'].find({'datetime': dateTime})
-    return dumps(doc)
+    doc = db['alarmscounter'].find_one({'datetime': time})
+    if doc is None:
+        return None
+    else:
+        return doc
 
-def getAllAlarmsCounter():
+def getAllAlarmsCounter(day):
     db = getConnection()
-    doc = db['alarms-counter'].find()
-    return dumps(doc)
+    doc = db['alarmscounter'].find({'originday': day})
+    return doc
 
 def saveAlarmCounter(alarms):
     db = getConnection()
-    doc = db['alarms-counter'].save(alarms)
-    return doc.inserted_ids
+    doc = db['alarmscounter'].save(alarms)
+    return doc

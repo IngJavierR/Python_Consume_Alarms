@@ -6,7 +6,8 @@ def filterAlarms(alarms):
     print('Filter')
     filteredAlarms = list(filter(lambda x: (
         #x['alarmsDTO']['condition']['value'] != 'LINK_DOWN' and
-        x['alarmsDTO']['severity'] == 'CRITICAL'
+        #x['alarmsDTO']['severity'] == 'CRITICAL'
+        x['alarmsDTO']['severity'] == 'CLEARED'
     ), alarms))
     return filteredAlarms
 
@@ -39,30 +40,41 @@ def getTimeToQuery(timeToSearchAlarms):
 
 def getTimeToCounter(hour):
     time = datetime.datetime.now()
-    return time.strftime('%Y-%m-%dT%{0}:'.format(hour))
+    formatString = '%Y-%m-%dT0{0}' if len(str(hour)) == 1 else '%Y-%m-%dT{0}'
+    return time.strftime(formatString.format(hour))
+
+def getDayToCounter():
+    time = datetime.datetime.now()
+    return time.strftime('%Y-%m-%dT')
 
 def createAlarmCounter(alarms):
     regex = r"(\d{4}-\d{2}-\d{2}\w\d+)"
     for alarm in alarms:
         resultReg = re.search(regex, alarm['alarmsDTO']['alarmFoundAt'], re.IGNORECASE)
         alarm['alarmsDTO']['dateTime'] = resultReg.group(1)
-
     alarmsPerHour = []
     for hour in range(0,24):
         alarmsNum = list(filter(lambda x: (
             x['alarmsDTO']['dateTime'].startswith(getTimeToCounter(hour))
         ), alarms))
         alarmsPerHour.append({
-            "count": alarmsNum.count(),
-            "datetime": getTimeToCounter(hour)
+            "counter": len(alarmsNum) if alarmsNum else 0,
+            "datetime": getTimeToCounter(hour),
+            "originday": getDayToCounter()
         })
     return alarmsPerHour
 
 def updateAlarmsCounter(alarms):
     alarmsPerHour = createAlarmCounter(alarms)
     for alarms in alarmsPerHour:
-        savedAlarm = persist.getAlarmsCounter(alarms[datetime])
-        savedAlarm['count'] = savedAlarm['count'] + alarms['count']
+        savedAlarm = persist.getAlarmsCounter(alarms['datetime'])
+        if savedAlarm is not None:
+            savedAlarm['counter'] = savedAlarm['counter'] + alarms['counter']
+        else:
+            savedAlarm = {}
+            savedAlarm['counter'] = alarms['counter']
+            savedAlarm['datetime'] = alarms['datetime']
+            savedAlarm['originday'] = alarms['originday']
         persist.saveAlarmCounter(savedAlarm)
 
 def job(timeToSearchAlarms):
@@ -71,10 +83,11 @@ def job(timeToSearchAlarms):
     print('Mostrando alarmas desde: {0}'.format(time))
     alarms = getNewAlarms(time)
     if not alarms:
+        alarms=[]
         print('No se encontraron alarmas')
     else:
         print(alarms)
-        sendAlarmsToRemedy(alarms)
+        #sendAlarmsToRemedy(alarms)
         updateAlarmsCounter(alarms)
         result = persist.saveAlarms(alarms)
         print(result)
