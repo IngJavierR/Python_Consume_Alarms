@@ -124,7 +124,7 @@ def start(cronTime):
     global timeToSearchAlarms
     timeToSearchAlarms = cronTime
     job()
-    schedule.every(timeToSearchAlarms).minutes.do(job)
-    while True:
-        schedule.run_pending()
-        time.sleep(1)
+    #schedule.every(timeToSearchAlarms).minutes.do(job)
+    #while True:
+        #schedule.run_pending()
+        #time.sleep(1)
