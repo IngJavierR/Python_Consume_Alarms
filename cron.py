@@ -6,10 +6,17 @@ def filterAlarms(alarms):
     print('Filter')
     filteredAlarms = list(filter(lambda x: (
         #x['alarmsDTO']['condition']['value'] != 'LINK_DOWN' and
-        x['alarmsDTO']['severity'] == 'CRITICAL'
-        #x['alarmsDTO']['severity'] == 'CLEARED'
+        x['alarmsDTO']['severity'] == 'CRITICAL' or 
+        x['alarmsDTO']['severity'] == 'CLEARED'
     ), alarms))
     return filteredAlarms
+
+def getAlarmsNeedTicket(alarms){
+    criticalAlarms = list(filter(lambda x: (
+        x['alarmsDTO']['severity'] == 'CRITICAL'
+    ), alarms))
+    return criticalAlarms
+}
 
 def getNewAlarms(time):
     primeAlarms = services.getAllAlarms(time)
@@ -96,17 +103,18 @@ def job():
     time = getTimeToQuery(timeToSearchAlarms)
     print('Mostrando alarmas desde: {0}'.format(time))
     alarms = getNewAlarms(time)
-    if not alarms:
-        alarms=[]
+    alarmsNeedTicket = getAlarmsNeedTicket(alarms)
+    if not alarmsNeedTicket:
+        alarmsNeedTicket=[]
         print('No se encontraron alarmas')
     else:
-        print(alarms)
-        sendAlarmsToRemedy(alarms)
-        updateAlarmsCounter(alarms)
-        result = persist.saveAlarms(alarms)
+        print('Alarms need ticket')
+        print(alarmsNeedTicket)
+        sendAlarmsToRemedy(alarmsNeedTicket)
+        updateAlarmsCounter(alarmsNeedTicket)
+        result = persist.saveAlarms(alarmsNeedTicket)
         print(result)
     print('Finalizado, nueva ejecucion en: {0} minutos'.format(timeToSearchAlarms))
-    return alarms
 
 def alarms(timeToSearchAlarms):
     print('Captura de alarmas Cisco Prime')
@@ -119,12 +127,7 @@ def alarms(timeToSearchAlarms):
     print(alarms)
     return alarms
 
-
 def start(cronTime):
     global timeToSearchAlarms
     timeToSearchAlarms = cronTime
     job()
-    #schedule.every(timeToSearchAlarms).minutes.do(job)
-    #while True:
-        #schedule.run_pending()
-        #time.sleep(1)
