@@ -79,6 +79,6 @@ def getDeviceInfo(id):
 def __main__():
     cron.start(timeToSearchAlarms)
     print('Inicie Servicio')
-    app.run()
+    app.run(host= '0.0.0.0')
 
 __main__()
