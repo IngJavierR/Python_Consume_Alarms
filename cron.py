@@ -102,10 +102,15 @@ def job():
     time = getTimeToQuery(timeToSearchAlarms)
     print('Mostrando alarmas desde: {0}'.format(time))
     alarms = getNewAlarms(time)
+    if not alarms:
+        print('No se encontraron alarmas')
+        return
+
     alarmsNeedTicket = getAlarmsNeedTicket(alarms)
+
     if not alarmsNeedTicket:
         alarmsNeedTicket=[]
-        print('No se encontraron alarmas')
+        print('No se encontraron alarmas que requieran ticket')
     else:
         print('Alarms need ticket')
         print(alarmsNeedTicket)
