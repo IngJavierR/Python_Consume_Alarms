@@ -11,12 +11,11 @@ def filterAlarms(alarms):
     ), alarms))
     return filteredAlarms
 
-def getAlarmsNeedTicket(alarms){
+def getAlarmsNeedTicket(alarms):
     criticalAlarms = list(filter(lambda x: (
         x['alarmsDTO']['severity'] == 'CRITICAL'
     ), alarms))
     return criticalAlarms
-}
 
 def getNewAlarms(time):
     primeAlarms = services.getAllAlarms(time)
